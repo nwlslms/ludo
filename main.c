@@ -59,7 +59,7 @@ void menu();
 void mulai();
 void ngocok(Team);
 void ambilPawn(Team *p);
-void setBidak(short, short);
+// void setBidak(short, short);
 Team set(short);
 short checkExit();
 short dadu();
@@ -132,7 +132,6 @@ void print() {
     for (i = 0; i < 15; i++) {
         for (j = 0; j < 15; j++) {
             short printed = 0;
-            // cek apakah ada bidak di posisi ini
             for (k = 0; k < 16; k++) {
                 if (i == bidak[k].y && j == bidak[k].x) {
                     switch(bidak[k].warna) {
@@ -222,12 +221,13 @@ void mulai() {
 			if (Player.otsd == 0) {
 				if (kocokan != 6) {
 					printf("You need to get 6 in order take the pawn! SKIPPED!\n");
+					system("PAUSE");
 				} else {
 					ambilPawn(&Player);
 					ngocok(Player);
 					kocokan = dadu();
 					while(kocokan == 6) {
-						if (Player.outside < 4) {
+						if (Player.otsd < 4) {
 							char pilihan;
 							do {
 								system("CLS");
@@ -272,8 +272,8 @@ void ngocok(Team Player)
 		system("CLS");
 		print();
 		printf("Your pawn: ");
-		for (int i = 0; i < Player.insd; i++) {
-			printf("%d ", Player.inside[i]);
+		for (int i = 0; i < 4; i++) {
+			if (Player.outside[i] != 0) printf("%hd ", Player.outside[i]);
 		}
 		printf("\nYour turn!\n");
 		printf("Type to roll the dice! (R/r)\n>> ");
