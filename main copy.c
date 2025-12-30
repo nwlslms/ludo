@@ -60,7 +60,7 @@ void botMain(Team *);
 void botPawn(Team *);
 void botMaju(Team *, short);
 
-short cekKemenangan(short *);
+
 Team set(short);
 short checkExit();
 short dadu();
@@ -203,7 +203,7 @@ void mulai() {
 	printf("Game start!\n");
 	Sleep(1500);
 	system("CLS");
-	short pemenang;
+
 	srand(time(NULL));
 	Team *Player, *Bot1;
 	short player = (rand() % 4) + 1;
@@ -248,36 +248,14 @@ void mulai() {
 			botMain(Bot1);
 			jalan = (jalan == 4) ? 1 : jalan + 1;
 		}
-		if(cekKemenangan(&pemenang) == 1) {
-			break;
-		}
 	}
-	switch(pemenang) {
-		case 1: printf("GREEN WIN THE ROUND!\n"); break;
-		case 2: printf("YELLOW IWN THE ROUND!\n"); break;
-		case 3: printf("BLUE WIN THE ROUND!\n"); break;
-		case 4: printf("RED WIN THE ROUND!\n"); break;
-		default: break;
-	}
-	system("PAUSE");
 	return;
 }
 
 void botPawn(Team *p) {
-	int choices[4];
-	int count = 0;
-	for (int i = 0; i < 4; i++) {
-		if (p->inside[i] != 0) choices[count++] = i;
-	}
-	if (count == 0) {
-		printf("Bot has no pawn to take out.\n");
-		Sleep(1000);
-		return;
-	}
-	int idx = choices[rand() % count];
-	short bidakBot = idx + 1;
+	short bidakBot = (rand() % 4) + 1;
 	printf("Bot took the pawn number %hd out.\n", bidakBot);
-	p->insd = (p->insd > 0) ? p->insd - 1 : 0;
+	p->insd--;
 	p->otsd++;
 	p->inside[bidakBot-1] = 0;
 	p->outside[bidakBot-1] = bidakBot;
@@ -287,23 +265,9 @@ void botPawn(Team *p) {
 void botMaju(Team *p, short kocokan) {
     system("CLS");
     print();
-    if (p->otsd == 0) {
-        // No pawn to move — nothing to do
-        printf("Bot has no pawn to move.\n");
-        Sleep(1000);
-        return;
-    }
     short yangMaju = (rand() % 4) + 1;
-    int attempts = 0;
-    while ((p->outside[yangMaju-1] == 0 || bidak[p->warna-1][yangMaju-1].tamat == 1) && attempts < 8) {
+    while (p->outside[yangMaju-1] == 0) {
         yangMaju = (rand() % 4) + 1;
-        attempts++;
-    }
-    if (p->outside[yangMaju-1] == 0 || bidak[p->warna-1][yangMaju-1].tamat == 1) {
-        // fallback: pick first available pawn that is not finished
-        for (int i = 0; i < 4; i++) {
-            if (p->outside[i] != 0 && bidak[p->warna-1][i].tamat == 0) { yangMaju = i + 1; break; }
-        }
     }
     printf("Bot chose pawn number %hd. Moved it %hd far.\n", yangMaju, kocokan);
     pergerakan(p, kocokan, yangMaju);
@@ -312,17 +276,9 @@ void botMaju(Team *p, short kocokan) {
         Sleep(1000);
         short bonus = dadu();
         printf("Bot rolled again and got %hd!\n", bonus);
-        // choose a pawn safely again
-        attempts = 0;
         yangMaju = (rand() % 4) + 1;
-        while ((p->outside[yangMaju-1] == 0 || bidak[p->warna-1][yangMaju-1].tamat == 1) && attempts < 8) {
+        while (p->outside[yangMaju-1] == 0) {
             yangMaju = (rand() % 4) + 1;
-            attempts++;
-        }
-        if (p->outside[yangMaju-1] == 0 || bidak[p->warna-1][yangMaju-1].tamat == 1) {
-            for (int i = 0; i < 4; i++) {
-                if (p->outside[i] != 0 && bidak[p->warna-1][i].tamat == 0) { yangMaju = i + 1; break; }
-            }
         }
         printf("Bot chose pawn number %hd. Moved it %hd far.\n", yangMaju, bonus);
         pergerakan(p, bonus, yangMaju);
@@ -357,7 +313,6 @@ void botMain(Team *p) {
 			printf("Bot has rolled the dice and get %hd!\n", kocokan);
 			Sleep(1000);
 			short milih = (rand() % 2) + 1;
-			if (p->otsd == 0) milih = 1; // if no pawn outside, must take pawn out
 			printf("Bot chose %s", (milih == 1) ? "set the pawn free!\n" : "move the pawn!\n");
 			if (milih == 1) {
 				botPawn(p);
@@ -418,10 +373,6 @@ void orangMain(Team *p) {
 }
 
 void pergerakan(Team *p, short kocokan, short pilihan) {
-    if (bidak[p->warna-1][pilihan-1].tamat == 1) {
-        printf("Pawn %hd already finished and cannot be moved.\n", pilihan);
-        return;
-    }
     while (kocokan > 0) {
         switch (p->warna) {
             case 1:
@@ -531,46 +482,34 @@ void bidakMenang(Team *p, short pilihan) {
 	switch(p->warna) {
 		case 1:
 			if (bidak[p->warna-1][pilihan-1].x == 6 && bidak[p->warna-1][pilihan-1].y == 7) {
-				if (bidak[p->warna-1][pilihan-1].tamat == 0) {
-					bidak[p->warna-1][pilihan-1].tamat = 1;
-					if (green.outside[pilihan-1] != 0) green.otsd = (green.otsd > 0) ? green.otsd - 1 : 0;
-					green.outside[pilihan-1] = 0;
-					green.selesai++;
-					printf("Green pawn %hd finished!\n", pilihan);
-				}
+				bidak[p->warna-1][pilihan-1].tamat = 1;
+				green.otsd--;
+				green.outside[pilihan-1] = 0;
+				green.selesai++;
 			}
 			break;
 		case 2:
 			if (bidak[p->warna-1][pilihan-1].x == 7 && bidak[p->warna-1][pilihan-1].y == 6) {
-				if (bidak[p->warna-1][pilihan-1].tamat == 0) {
-					bidak[p->warna-1][pilihan-1].tamat = 1;
-					if (yellow.outside[pilihan-1] != 0) yellow.otsd = (yellow.otsd > 0) ? yellow.otsd - 1 : 0;
-					yellow.outside[pilihan-1] = 0;
-					yellow.selesai++;
-					printf("Yellow pawn %hd finished!\n", pilihan);
-				}
+				bidak[p->warna-1][pilihan-1].tamat = 1;
+				yellow.otsd--;
+				yellow.outside[pilihan-1] = 0;
+				yellow.selesai++;
 			}
 			break;
 		case 3:
 			if (bidak[p->warna-1][pilihan-1].x == 8 && bidak[p->warna-1][pilihan-1].y == 7) {
-				if (bidak[p->warna-1][pilihan-1].tamat == 0) {
-					bidak[p->warna-1][pilihan-1].tamat = 1;
-					if (blue.outside[pilihan-1] != 0) blue.otsd = (blue.otsd > 0) ? blue.otsd - 1 : 0;
-					blue.outside[pilihan-1] = 0;
-					blue.selesai++;
-					printf("Blue pawn %hd finished!\n", pilihan);
-				}
+				bidak[p->warna-1][pilihan-1].tamat = 1;
+				blue.otsd--;
+				blue.outside[pilihan-1] = 0;
+				blue.selesai++;
 			}
 			break;
 		case 4:
 			if (bidak[p->warna-1][pilihan-1].x == 7 && bidak[p->warna-1][pilihan-1].y == 8) {
-				if (bidak[p->warna-1][pilihan-1].tamat == 0) {
-					bidak[p->warna-1][pilihan-1].tamat = 1;
-					if (red.outside[pilihan-1] != 0) red.otsd = (red.otsd > 0) ? red.otsd - 1 : 0;
-					red.outside[pilihan-1] = 0;
-					red.selesai++;
-					printf("Red pawn %hd finished!\n", pilihan);
-				}
+				bidak[p->warna-1][pilihan-1].tamat = 1;
+				red.otsd--;
+				red.outside[pilihan-1] = 0;
+				red.selesai++;
 			}
 			break;
 		default: break;
@@ -590,6 +529,7 @@ int eliminasi(Team *p, short pilihan) {
         for (int j = 0; j < 4; j++) {    
             if (bidak[i][j].x == bidak[p->warna-1][pilihan-1].x &&
                 bidak[i][j].y == bidak[p->warna-1][pilihan-1].y) {
+
                 if (i == p->warna-1) {
                     continue; 
                 } else {
@@ -598,6 +538,7 @@ int eliminasi(Team *p, short pilihan) {
 						bidak[i][j].x = base_pos[i][j][1];
 						bidak[i][j].masuk = 0;
 						bidak[i][j].kebal = 0;
+
 						Team *target;
 						if (i == 0) target = &green;
 						else if (i == 1) target = &yellow;
@@ -605,8 +546,6 @@ int eliminasi(Team *p, short pilihan) {
 						else target = &red;
 						target->outside[j] = 0;
 						target->inside[j] = j+1;
-						target->insd++;
-						target->otsd--;
 						elim = 1;
 					}
                 }
@@ -615,22 +554,7 @@ int eliminasi(Team *p, short pilihan) {
     }
 	return elim;
 }
-short cekKemenangan(short *pemenang) {
-	if (green.selesai == 4) {
-		*pemenang = 1;
-		return 1;
-	} else if (yellow.selesai == 4) {
-		*pemenang = 2;
-		return 1;
-	} else if (blue.selesai == 4) {
-		*pemenang = 3;
-		return 1;
-	} else if (red.selesai == 4) {
-		*pemenang = 4;
-		return 1;
-	}
-	return 0;
-}
+
 void maju(short kocokan, Team *p) {
     short pilihan;
     char cmd;
@@ -646,7 +570,7 @@ void maju(short kocokan, Team *p) {
         if (cmd >= '1' && cmd <= '4') {
             pilihan = cmd - '0';
         }
-    } while (pilihan < 1 || pilihan > 4 || p->outside[pilihan-1] == 0 || bidak[p->warna-1][pilihan-1].tamat == 1);
+    } while (pilihan < 1 || pilihan > 4 || p->outside[pilihan-1] == 0);
 
     printf("You chose pawn number %hd!\nMoved it %hd far.\n", pilihan, kocokan);
     pergerakan(p, kocokan, pilihan);
@@ -667,7 +591,7 @@ void maju(short kocokan, Team *p) {
             if (cmd >= '1' && cmd <= '4') {
                 pilihan = cmd - '0';
             }
-        } while (pilihan < 1 || pilihan > 4 || p->outside[pilihan-1] == 0 || bidak[p->warna-1][pilihan-1].tamat == 1);
+        } while (pilihan < 1 || pilihan > 4 || p->outside[pilihan-1] == 0);
         printf("You chose pawn number %hd!\nMoved it %hd far.\n", pilihan, bonus);
         pergerakan(p, bonus, pilihan);
     }
